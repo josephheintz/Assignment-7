@@ -1,3 +1,4 @@
+/* Base Structure */
 class Graph {
     constructor() {
         this.adjacencyList = {};
@@ -36,11 +37,20 @@ class CommunicationSystem {
         this.messages.push(message);
         console.log(`Encrypted message sent from ${message.sender} to ${message.receiver}`);
     }
+    
+    sendMessageRLE(message) {
+        const compressedBody = runLengthEncode(message.body);
+        message.metadata.RLE = true;
+        const compressedMessage = new Message(message.sender, message.receiver, message.metadata, compressedBody);
+        this.messages.push(compressedMessage);
+        console.log(`Compressed message sent from ${compressedMessage.sender} to ${compressedMessage.receiver}`);
+    }
 
     getMessages() {
         return this.messages;
     }
 }
+/* Base Structure */
 
 // Function to perform modular exponentiation
 function modExp(base, exp, mod) {
@@ -68,6 +78,32 @@ function decrypt(encryptedMessage, privateKey, modulus) {
     return decryptedInt.map(m => String.fromCharCode(m)).join('');
 }
 
+// Run-length encoding
+function runLengthEncode(input) {
+    let encoded = '';
+    let count = 1;
+
+    for (let i = 1; i <= input.length; i++) {
+        if (input[i] === ' ') {
+            if (input[i - 1] !== ' ') {
+                encoded += input[i - 1] + count;
+                count = 1;
+            }
+            encoded += ' ';
+        } else if (input[i] === input[i - 1]) {
+            count++;
+        } else {
+            if (input[i - 1] !== ' ') {
+                encoded += input[i - 1] + count;
+            }
+            count = 1;
+        }
+    }
+
+    return encoded;
+}
+
+
 // Example usage
 const graph = new Graph();
 graph.addNode('Alice');
@@ -78,6 +114,11 @@ graph.addEdge('Bob', 'Charlie');
 
 const commSystem = new CommunicationSystem(graph);
 
+// RLE
+const RLEMessage = new Message('Alice', 'Bob', { encrypted: false }, 'Helloooooo Bob!');
+commSystem.sendMessageRLE(RLEMessage);
+
+// RSA
 const publicKey = 65537; // Example public key
 const privateKey = 2753; // Example private key
 const modulus = 3233; // Example modulus
@@ -98,3 +139,5 @@ commSystem.getMessages().forEach(msg => {
         console.log(`Decrypted message for Charlie: ${decryptedBody}`);
     }
 });
+
+console.log(commSystem.getMessages());
